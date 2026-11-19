@@ -1,0 +1,17 @@
+.env
+.env.*
+.DS_Store
+__pycache__/
+*.py[cod]
+*.log
+.pytest_cache/
+.venv/
+
+# ModelScope client metadata and local credentials
+.msc
+.mv
+
+# Large GGUF model weights (hosted on ModelScope, do not commit to GitHub)
+*.gguf
+models/
+configuration.json
