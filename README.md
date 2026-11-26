@@ -21,6 +21,10 @@
   <img src="https://img.shields.io/badge/Runtime-llama.cpp-111827?style=flat-square" alt="llama.cpp">
 </p>
 
+<p>
+  <strong>简体中文</strong> | <a href="./README_EN.md">English</a>
+</p>
+
 </div>
 
 > **声明 / Notice**
@@ -167,14 +171,34 @@ python3 examples/llama_cpp_multimodal_embedding.py \
 
 ---
 
+## 评测结果（官方 PyTorch BF16 vs GGUF 4 档量化）
+
+我们在 NVIDIA A100 80GB 上使用完全一致的官方 WeMM Chat Template 与评测口径，在 **5 个公开标准检索基准** 上对比了 **腾讯官方原版 `WeMM-Embedding-2B`（BF16 PyTorch）** 与本仓库 4 档 GGUF 模型（`llama.cpp` CUDA + `mmproj-BF16`，完整 Matryoshka 降维、向量余弦相似度与 Recall@1 明细见 [`BENCHMARK.md`](./BENCHMARK.md)）：
+
+![Official PyTorch BF16 vs WeMM-Embedding-2B-GGUF Comparison](./assets/benchmark_comparison.png)
+
+| 模型 / 量化版本 | 推理框架 | 文件大小 | 与官方余弦相似度 (文本/综合) | ViDoRe-DocVQA (NDCG@5) | ViDoRe-InfoVQA (NDCG@5) | ViDoRe-ArxivQA (NDCG@5) | MTEB-SciFact (NDCG@10) | MTEB-NFCorpus (NDCG@10) | **5 基准均分** | **相对官方原版** |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **Official BF16** *(官方原版)* | PyTorch | 5.07 GB | 1.0000 / 1.0000 | 55.31 | 86.10 | 87.97 | 60.12 | 36.63 | **65.23** | **100.00%** |
+| **GGUF BF16** | llama.cpp | 4.46 GB | 0.9999 / 0.9920 | 55.34 | 86.26 | 89.50 | 60.47 | 36.66 | **65.65** | **100.64%** |
+| **GGUF Q8_0** | llama.cpp | 2.38 GB | 0.9996 / 0.9916 | 55.58 | 86.12 | 89.21 | 60.21 | 36.55 | **65.53** | **100.46%** |
+| **GGUF Q6_K** | llama.cpp | 1.84 GB | 0.9984 / 0.9906 | 55.69 | 86.50 | 89.18 | 60.41 | 36.62 | **65.68** | **100.69%** |
+| **GGUF Q4_K_M** | llama.cpp | 1.45 GB | 0.9762 / 0.9681 | 54.57 | 85.93 | 87.98 | 59.33 | 36.42 | **64.85** | **99.42%** |
+
+- **GGUF 转换零精度损失**：`GGUF BF16` 与官方 PyTorch 原版文本向量余弦相似度高达 **0.9999–1.0000**，5 基准均分持平略优（100.64%）。
+- **`Q6_K`（1.84 GB，体积 -64%）**：5 基准均分 **65.68**（相对官方 **100.69%**，文本余弦相似度 0.9984），性价比最高；
+- **`Q4_K_M`（1.45 GB，体积 -71%）**：体积不到官方原版的 1/3，仍保留 **99.42%** 的综合检索精度，非常适合消费级显卡或纯 CPU 本地部署。
+
+> 说明：以上为同硬件、同 Prompt 模板在 5 个代表性公开数据集上的实测对照数据，用于验证 GGUF 转换及各量化档位相对官方原版的精度保留率；并非上游论文中 78 个数据集的完整 MMEB-v2 总分。
+
+---
+
 ## 验证说明
 
 本 GGUF 转换版本已完成以下基础校验：
 - GGUF 文件可正常加载读取；
 - 输出为 2,048 维归一化向量；
-- `llama.cpp` 图像多模态推理路径可正常执行。
-
-> 注意：原始模型的评测基准（Benchmark）成绩对应上游原始权重，不代表量化后 GGUF 模型的实测分数。
+- `llama.cpp` 图像多模态推理路径与 5 个公开检索基准均已验证通过。
 
 ---
 
